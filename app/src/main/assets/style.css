@@ -1,0 +1,331 @@
+@font-face {
+  font-family: textFont;
+  src: url(WixMadeforDisplay-VariableFont_wght.ttf);
+  font-style: normal;
+  font-weight: 400;
+  }
+
+:root {  
+  --color_primary: #222626;
+  --color_secondary: #111313;
+  --color_inverse: #F6F8F8;
+  --color_accent: #AABCBE;
+  --size_font6: calc(var(--size_font12)/2);
+  --size_font8: calc(var(--size_font12)/1.5);
+  --size_font10: calc(var(--size_font12)/1.2);
+  --size_font12: max(2vw, 2vh);
+  --size_font16: calc(var(--size_font12)/0.75);
+  --size_font24: calc(2*var(--size_font12));
+  --size_font48: calc(2*var(--size_font24));
+  --size_border0: calc(var(--size_border1)/3);
+  --size_border1: calc(var(--size16)/10.6);
+  --size_border2: calc(var(--size_border1)*1.5);
+  --size4: calc(var(--size16)/4);
+  --size6: calc(var(--size16)/2.6);
+  --size12: calc(var(--size16)/1.3);
+  --size16: max(2vw, 2vh);
+  --size20: calc(1.25*var(--size16));
+  --size24: calc(1.5*var(--size16));
+  --size28: calc(1.75*var(--size16));
+  --size32: calc(2*var(--size16));
+  --size48: calc(2*var(--size24));
+}
+
+*, html, body, h1, h2, h3, h4, h5, h6, a, img, ul, ol, li, div, span, b, time, mark,
+u, p, input, label, textarea, select, option {  
+  color: var(--color_inverse);
+  font-family: textFont;
+  font-size: var(--size_font12);
+  line-height: 1.5;
+  margin: 0;
+  padding: 0;
+  position: relative;
+  border: 0;
+  vertical-align: top;
+  z-index: auto;
+  box-sizing: border-box; 
+  transition: 1s ease-in-out;
+}                                                      
+
+html, 
+body {  
+  width: 100%;
+  height: 100%;
+  background-color: var(--color_primary)
+}
+
+.main {
+  width: 100%;
+  height: 100%;
+  padding: var(--size16);
+}
+
+.text_h1 {
+  font-size: var(--size_font48);
+}
+.text_h2 {
+  font-size: var(--size_font24);
+}
+.text_h3 {
+  font-size: var(--size_font16);
+}
+.text_small {
+  font-size: var(--size_font10);
+}
+.text_small_dop {
+  font-size: var(--size_font8);
+}
+.text_mini {
+  font-size: var(--size_font6);
+}
+.text_accent {
+  color: var(--color_accent);
+}
+.text_opact {
+  opacity: 0.5;
+}
+
+.flex_row {
+  display: flex;
+  flex-direction: row;
+}
+.flex_col {
+  display: flex;
+  flex-direction: column;
+}
+.flex_row.centered,
+.flex_col.centered {
+  align-items: center;
+}
+
+.divider {
+  width: calc(100% + var(--size32));
+  left: calc(-1*var(--size16));
+  height: var(--size_border0);
+  background-color: var(--color_secondary);
+}
+
+.section {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+.section.short_view {
+  gap: var(--size16);
+}
+
+.short_view .city {
+  width: 40%;
+}
+
+.item_line {
+  justify-content: space-between;
+  gap: var(--size32);
+  padding: var(--size12) 0;
+  cursor: pointer;
+}
+
+.item_line .left_part {
+  width: 70%;
+  justify-content: space-between;
+}
+
+.item_line .right_part {
+  width: 30%;
+  justify-content: flex-end;
+}
+
+.item_line .temperature *,
+.item_main .temperature * {
+  line-height: 1.1;
+}
+
+.item_line .temperature .limit,
+.item_main .temperature .limit {
+  justify-content: space-between;
+}
+
+.item_line .stats {
+  gap: var(--size16);
+}
+
+.item_line .stats .text_small::after {
+  content: 'm/s';
+  font-size: var(--size_font6);
+  padding-left: var(--size_border2);
+}
+
+.item_line .wind .direction {
+  gap: var(--size_border2);
+}
+
+.scroll_line {
+  width: 100%;
+  overflow-x: auto;
+  gap: var(--size16);
+  margin-bottom: var(--size16);
+}
+
+.scroll_line .item_scroll_line .icon_weather {
+  margin: var(--size4) 0 var(--size6) 0;
+}
+
+.scroll_line .item_scroll_line.arrow {
+  justify-content: center;
+}
+
+.item_main .city ~ .scroll_line {
+  margin-top: var(--size24);
+}
+
+.item_main .icon_weather {
+  margin: var(--size16) 0 var(--size6) 0;
+}
+
+.days_list {
+  margin-top: var(--size16);
+  gap: var(--size16);
+}
+
+.item_days_list {
+  gap: var(--size24);
+}
+
+.item_days_list .right_part {
+  justify-content: space-between;
+}
+
+.item_days_list .day_name {
+  width: 20%;
+}
+.item_days_list .right_part {
+  width: 80%;
+}
+
+.item_days_list .wind {
+  gap: var(--size6);
+}
+
+.item_days_list .wind .power::after {
+  content: 'm/s';
+  display: block;
+  font-size: var(--size_font8);
+  color: var(--color_accent);
+}
+
+.item_days_list .temperature {
+  align-items: flex-end;
+  gap: var(--size4);
+}
+
+svg#icons_all {
+  visibility: hidden;
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+svg * {
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.icon svg {
+  height: 100%;
+  width: 100%;
+  fill: transparent;
+}
+
+.icon_big {
+  width: var(--size48);
+  height: var(--size48);
+
+}
+
+.icon_normal {
+  width: var(--size24);
+  height: var(--size24);
+}
+
+.icon_small {
+  width: var(--size16);
+  height: var(--size16);
+}
+
+.icon_compas {
+  width: var(--size6);
+  height: var(--size6);
+  transform-box: fill-box;
+    transform-origin: center;
+}
+
+.icon_compas.compas_sw  {
+  transform: rotate(45deg);
+}
+.icon_compas.compas_se  {
+  transform: rotate(-45deg);
+}
+
+.icon_big .icon_dop {
+  stroke-width: var(--size_border2);
+}
+
+.icon {
+  stroke: var(--color_accent);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  stroke-width: var(--size_border1);
+}
+
+.icon.icon_small,
+.arrow .icon {
+  stroke-width: var(--size_border0);
+}
+
+.icon_weather.icon_dop_top {
+  align-items: flex-start;
+  justify-content: flex-end;
+}
+
+.icon.icon_night svg {
+  fill: var(--color_secondary);
+}
+
+.icon.icon_fill svg {
+  fill: var(--color_accent);
+  stroke: none;
+}
+
+.icon .icon_with {
+  position: absolute;
+}
+
+.icon .icon_dop {
+  height: 58%;
+  width: 58%;
+}
+
+.icon .icon_dop.dop_second {
+  position: absolute;
+  bottom: 10%;
+  right: 5%;
+} 
+
+.icon .icon_dop.dop_second.dop_duo {
+  bottom: 20%;
+  right: 20%;
+} 
+.icon .icon_dop.dop_second.dop_duo + .dop_duo {
+  top: 0;
+}
+
+.icon_weather.icon_dop_top .icon_dop {
+  fill: var(--color_primary);
+}
+
+.icon_weather.icon_dop_top .icon_dop.dop_second {
+  left: 0;
+  bottom: 0;
+}
