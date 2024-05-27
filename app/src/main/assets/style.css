@@ -3,9 +3,9 @@
   src: url(WixMadeforDisplay-VariableFont_wght.ttf);
   font-style: normal;
   font-weight: 400;
-  }
+}
 
-:root {  
+:root {
   --color_primary: #222626;
   --color_secondary: #111313;
   --color_inverse: #F6F8F8;
@@ -23,7 +23,7 @@
   --size4: calc(var(--size16)/4);
   --size6: calc(var(--size16)/2.6);
   --size12: calc(var(--size16)/1.3);
-  --size16: max(2vw, 2vh);
+  --size16: max(2.5vw, 2.5vh);
   --size20: calc(1.25*var(--size16));
   --size24: calc(1.5*var(--size16));
   --size28: calc(1.75*var(--size16));
@@ -32,7 +32,7 @@
 }
 
 *, html, body, h1, h2, h3, h4, h5, h6, a, img, ul, ol, li, div, span, b, time, mark,
-u, p, input, label, textarea, select, option {  
+u, p, input, label, textarea, select, option {
   color: var(--color_inverse);
   font-family: textFont;
   font-size: var(--size_font12);
@@ -43,12 +43,11 @@ u, p, input, label, textarea, select, option {
   border: 0;
   vertical-align: top;
   z-index: auto;
-  box-sizing: border-box; 
+  box-sizing: border-box;
   transition: 1s ease-in-out;
-}                                                      
-
-html, 
-body {  
+}
+html,
+body {
   width: 100%;
   height: 100%;
   background-color: var(--color_primary)
@@ -156,15 +155,15 @@ body {
   padding-left: var(--size_border2);
 }
 
-.item_line .wind .direction {
+.item_days_list .wind .direction {
   gap: var(--size_border2);
+  min-width: var(--size12);
 }
 
 .scroll_line {
-  width: 100%;
-  overflow-x: auto;
   gap: var(--size16);
   margin-bottom: var(--size16);
+  overflow-y: auto;
 }
 
 .scroll_line .item_scroll_line .icon_weather {
@@ -237,10 +236,10 @@ svg * {
   fill: transparent;
 }
 
+
 .icon_big {
   width: var(--size48);
   height: var(--size48);
-
 }
 
 .icon_normal {
@@ -257,7 +256,7 @@ svg * {
   width: var(--size6);
   height: var(--size6);
   transform-box: fill-box;
-    transform-origin: center;
+  transform-origin: center;
 }
 
 .icon_compas.compas_sw  {
@@ -311,12 +310,16 @@ svg * {
   position: absolute;
   bottom: 10%;
   right: 5%;
-} 
+}
+
+.icon .icon_dop.dop_special {
+  background-color: var(--color_primary);
+}
 
 .icon .icon_dop.dop_second.dop_duo {
   bottom: 20%;
   right: 20%;
-} 
+}
 .icon .icon_dop.dop_second.dop_duo + .dop_duo {
   top: 0;
 }
@@ -328,4 +331,52 @@ svg * {
 .icon_weather.icon_dop_top .icon_dop.dop_second {
   left: 0;
   bottom: 0;
+}
+
+.navigation {
+  height: var(--size24);
+  justify-content: center;
+  margin-bottom: var(--size12);
+}
+
+.navigation * {
+  cursor: pointer;
+}
+
+.navigation .pages {
+  gap: var(--size6);
+}
+
+.navigation .pages .icon_small {
+  width: var(--size12);
+  height: var(--size12);
+}
+
+.navigation .pages #selected_page svg {
+  fill: var(--color_accent);
+  opacity: 0.5;
+}
+
+.navigation .icon_list {
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+
+.navigation .icon_add {
+  position: absolute;
+  right: 0;
+  top: 0;
+}
+
+#add_view .navigation .icon_add {
+  transform-box: fill-box;
+  transform-origin: center;
+  transform: rotate(45deg);
+}
+
+.navigation .search_field {
+  width: 100%;
+  height: 100%;
+  background-color: var(--color_inverse);
 }
