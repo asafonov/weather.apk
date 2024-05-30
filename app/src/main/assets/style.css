@@ -236,7 +236,6 @@ svg * {
   fill: transparent;
 }
 
-
 .icon_big {
   width: var(--size48);
   height: var(--size48);
@@ -250,6 +249,11 @@ svg * {
 .icon_small {
   width: var(--size16);
   height: var(--size16);
+}
+
+.icon_backspace {
+  width: var(--size12);
+  height: var(--size12);
 }
 
 .icon_compas {
@@ -335,8 +339,9 @@ svg * {
 
 .navigation {
   height: var(--size24);
-  justify-content: center;
+  justify-content: space-between;
   margin-bottom: var(--size12);
+  gap: var(--size16);
 }
 
 .navigation * {
@@ -357,26 +362,64 @@ svg * {
   opacity: 0.5;
 }
 
-.navigation .icon_list {
-  position: absolute;
-  left: 0;
-  top: 0;
-}
-
-.navigation .icon_add {
-  position: absolute;
-  right: 0;
-  top: 0;
-}
-
 #add_view .navigation .icon_add {
   transform-box: fill-box;
   transform-origin: center;
   transform: rotate(45deg);
 }
 
-.navigation .search_field {
+.navigation .search_section {
   width: 100%;
+}
+
+.navigation .search_section .search_field,
+.navigation .search_section .search_result_list {
+  width: 100%;
+  background-color: var(--color_secondary);
+  border-radius: var(--size6);
+  color: var(--color_primary);
+}
+
+.navigation .search_field {
   height: 100%;
-  background-color: var(--color_inverse);
+  padding: 0 var(--size24) 0 var(--size12);
+
+}
+
+.navigation .search_field .icon_backspace {
+  visibility: hidden;
+  position: absolute;
+  right: var(--size6);
+  cursor: pointer;
+  stroke-width: var(--size_border0);
+}
+
+.navigation .search_field input:not([value=""]) ~ .icon_backspace {
+  visibility: visible;
+}
+
+.navigation .search_field input {
+  background-color: transparent;
+  -webkit-appearance: none;
+  -moz-appearance:    none;
+  appearance:         none;
+  width: 100%;
+}
+
+.navigation .search_field input:focus-visible {
+  outline: none;
+}
+
+.navigation .search_result_list {
+  position: absolute;
+  z-index: 99;
+  top: 100%;
+  padding: var(--size12);
+  gap: var(--size6);
+}
+
+.navigation .search_result_list .divider {
+  width: 100%;
+  left: 0;
+  background-color: var(--color_primary);
 }

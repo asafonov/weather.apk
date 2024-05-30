@@ -1,26 +1,31 @@
 class Cache {
-  constructor (ttl) {
+  constructor (ttl, prefix) {
+    this.prefix = prefix || 'asafonov.org'
     this.ttl = ttl || 3600000
   }
   set (name, value) {
     const ts = new Date().getTime()
-    localStorage.setItem(name, {ts, value})
+    localStorage.setItem(this.prefix + name, JSON.stringify({ts, value}))
     return value
   }
   get (name) {
-    const data = localStorage.getItem(name)
+    const data = JSON.parse(localStorage.getItem(this.prefix + name))
     if (data && data.ts) {
       if (data.ts + this.ttl < new Date().getTime())
         return data.value
-      this.remove(name)
     }
     return
   }
+  getItem (name) {
+    const data = JSON.parse(localStorage.getItem(this.prefix + name))
+    return data ? data.value : null
+  }
   remove (name) {
-    localStorage.removeItem(name)
+    localStorage.removeItem(this.prefix + name)
   }
   destroy() {
     this.ttl = null
+    this.prefix = null
   }
 }
 class Forecast {
@@ -48,6 +53,9 @@ class Forecast {
       rain: item.rain,
       snow: item.snow
     }
+  }
+  getCachedData() {
+    return asafonov.cache.getItem(this.place)
   }
   async getData() {
     let data = asafonov.cache.get(this.place)
@@ -99,7 +107,7 @@ class Forecast {
         data.now = {
           ...this.formatData(apiResp[0]), ...{max: maxToday, min: minToday}
         }
-        console.log(data)
+        asafonov.cache.set(this.getPlace(), data)
       } catch (e) {
         console.error(e)
         return
@@ -176,7 +184,11 @@ class ForecastView {
   }
   async display() {
     document.querySelector('.city_name').innerHTML = this.model.getPlace()
+    this.displayData(this.model.getCachedData())
     const data = await this.model.getData()
+    this.displayData(data)
+  }
+  displayData (data) {
     if (! data) return
     document.querySelector('.temperature .now').innerHTML = `${data.now.temp}°`
     document.querySelector('.temperature .max').innerHTML = `${data.now.max}°`
@@ -247,11 +259,11 @@ class ForecastView {
 window.asafonov = {}
 window.asafonov.version = '0.1'
 window.asafonov.messageBus = new MessageBus()
-window.asafonov.cache = new Cache()
+window.asafonov.cache = new Cache(600)
 window.asafonov.events = {
 }
 window.asafonov.settings = {
-  apiUrl: 'http://isengard.asafonov.org:8000/weather/'
+  apiUrl: 'http://isengard.asafonov.org/weather/'
 }
 window.onerror = (msg, url, line) => {
   if (!! window.asafonov.debug) alert(`${msg} on line ${line}`)
