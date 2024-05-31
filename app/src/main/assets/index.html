@@ -11,6 +11,20 @@
 
 <body>
   <svg xmlns="http://www.w3.org/2000/svg" id="icons_all">
+    <symbol id="pages" viewBox="0 0 24 24">
+      <path d="M 3,12 A 9,9 0 1 0 12,3 9,9 0 0 0 3,12"/>
+    </symbol>
+    <symbol id="add" viewBox="0 0 24 24">
+      <path d="M 3,12 A 9,9 0 1 0 12,3 9,9 0 0 0 3,12"/>
+      <path d="m 9,12 h 6"/>
+      <path d="m 12,9 v 6"/>
+    </symbol>
+    <symbol id="list" viewBox="0 0 24 24">
+      <path d="M 3,12 A 9,9 0 1 0 12,3 9,9 0 0 0 3,12"/>
+      <path d="m 9,9.6 h 6"/>
+      <path d="m 9,12 h 6"/>
+      <path d="m 9,14.4 h 6"/>
+    </symbol>
     <symbol id="wind" viewBox="0 0 24 24">
       <path d="m 5,8 h 8.5 A 2.5,2.5 0 1 0 11.16,4.76"/>
       <path d="m 3,12 h 15.5 a 2.5,2.5 0 1 1 -2.34,3.24"/>
@@ -68,6 +82,35 @@
   </svg>
 
   <div class="main">
+    <div class="navigation flex_row">
+      <div style="opacity: 0;" class="icon icon_list icon_normal">
+        <svg>
+          <use xlink:href="#list"/>
+        </svg>
+      </div>
+      <div style="opacity: 0;" class="pages flex_row centered">
+        <div class="icon icon_small" id="selected_page">
+          <svg>
+            <use xlink:href="#pages"/>
+          </svg>
+        </div>
+        <div class="icon icon_small">
+          <svg>
+            <use xlink:href="#pages"/>
+          </svg>
+        </div>
+        <div class="icon icon_small">
+          <svg>
+            <use xlink:href="#pages"/>
+          </svg>
+        </div>
+      </div>
+      <div class="icon icon_add icon_normal">
+        <svg>
+          <use xlink:href="#add"/>
+        </svg>
+      </div>
+    </div>
     <div class="item_main">
       <div class="city flex_col centered">
         <div class="city_name text_h2">Tver</div>

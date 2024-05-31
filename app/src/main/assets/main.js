@@ -11,7 +11,7 @@ class Cache {
   get (name) {
     const data = JSON.parse(localStorage.getItem(this.prefix + name))
     if (data && data.ts) {
-      if (data.ts + this.ttl < new Date().getTime())
+      if (data.ts + this.ttl > new Date().getTime())
         return data.value
     }
     return
@@ -30,11 +30,7 @@ class Cache {
 }
 class Forecast {
   constructor (place) {
-    if (place) {
-      this.place = place.charAt(0).toUpperCase() + place.slice(1).toLowerCase()
-    } else {
-      this.place = 'Belgrade'
-    }
+    this.place = place.charAt(0).toUpperCase() + place.slice(1).toLowerCase()
   }
   getPlace() {
     return this.place
@@ -105,7 +101,7 @@ class Forecast {
           }
         }
         data.now = {
-          ...this.formatData(apiResp[0]), ...{max: maxToday, min: minToday}
+          ...this.formatData(apiResp[0]), ...{max: maxToday, min: minToday, timezone: apiResp[0].timezone}
         }
         asafonov.cache.set(this.getPlace(), data)
       } catch (e) {
@@ -158,6 +154,56 @@ class MessageBus {
     this.subscribers = null;
   }
 }
+class ControlView {
+  constructor() {
+    this.addEventListeners()
+    this.navigationView = new NavigationView()
+    this.forecastViews = []
+    const cities = asafonov.cache.getItem('cities')
+    if (cities && cities.length > 0) {
+      for (let i = 0; i < cities.length; ++i) {
+        this.forecastViews.push(new ForecastView(cities[i]))
+      }
+      this.displayForecast()
+    } else {
+      const forecastView = new ForecastView(asafonov.settings.defaultCity)
+      forecastView.display()
+    }
+  }
+  displayForecast (index) {
+    if (index === null || index === undefined) {
+      index = asafonov.cache.getItem('city')
+      if (index === null || index ===undefined || index > this.forecastViews.length - 1) index = this.forecastViews.length - 1
+    }
+    asafonov.cache.set('city', index)
+    this.forecastViews[index].display()
+  }
+  addEventListeners() {
+    asafonov.messageBus.subscribe(asafonov.events.CITY_ADDED, this, 'onCityAdded')
+    asafonov.messageBus.subscribe(asafonov.events.CITY_SELECTED, this, 'onCitySelected')
+  }
+  removeEventListeners() {
+    asafonov.messageBus.unsubscribe(asafonov.events.CITY_ADDED, this, 'onCityAdded')
+    asafonov.messageBus.unsubscribe(asafonov.events.CITY_SELECTED, this, 'onCitySelected')
+  }
+  onCityAdded ({city}) {
+    this.forecastViews.push(new ForecastView(city))
+    this.displayForecast(this.forecastViews.length - 1)
+  }
+  onCitySelected ({index}) {
+    this.displayForecast(index)
+  }
+  destroy() {
+    for (let i = 0; i < this.forecastViews.length; ++i) {
+      this.forecastViews[i].destroy()
+      this.forecastViews[i] = null
+    }
+    this.forecastViews = null
+    this.navigationView.destroy()
+    this.navigationView = null
+    this.removeEventListeners()
+  }
+}
 class ForecastView {
   constructor (place) {
     this.model = new Forecast(place)
@@ -188,12 +234,15 @@ class ForecastView {
     const data = await this.model.getData()
     this.displayData(data)
   }
+  getCurrentTime (timezone) {
+    return new Date(new Date().getTime() + (timezone || 0) * 1000).toISOString().substr(11, 5)
+  }
   displayData (data) {
     if (! data) return
     document.querySelector('.temperature .now').innerHTML = `${data.now.temp}°`
     document.querySelector('.temperature .max').innerHTML = `${data.now.max}°`
     document.querySelector('.temperature .min').innerHTML = `${data.now.min}°`
-    document.querySelector('.city_time').innerHTML = data.now.time
+    document.querySelector('.city_time').innerHTML = this.getCurrentTime(data.now.timezone)
     const icons = this.getIconByData(data.now)
     const iconDiv = document.querySelector('.icon_weather')
     iconDiv.innerHTML = this.getIcon(icons)
@@ -256,19 +305,91 @@ class ForecastView {
     this.model = null
   }
 }
+class NavigationView {
+ 
+  constructor() {
+    const navigationContainer = document.querySelector('.navigation')
+    this.addButton = navigationContainer.querySelector('.icon_add')
+    this.pagesButtons = navigationContainer.querySelector('.pages')
+    this.onAddClickProxy = this.onAddClick.bind(this)
+    this.addEventListeners()
+    this.updatePagesButtons()
+  }
+  updatePagesButtons (selected) {
+    const cities = asafonov.cache.getItem('cities')
+    const city = selected || asafonov.cache.getItem('city')
+    if (cities && cities.length > 1) {
+      this.pagesButtons.style.opacity = 1
+      this.pagesButtons.innerHTML = ''
+      for (let i = 0; i < cities.length; ++i) {
+        const div = document.createElement('div')
+        div.className = 'icon icon_small'
+        if (i === city) div.id = 'selected_page'
+        div.innerHTML = '<svg><use xlink:href="#pages"/></svg>'
+        div.addEventListener('click', () => this.selectCity(i))
+        this.pagesButtons.appendChild(div)
+      }
+    } else {
+      this.pagesButtons.style.opacity = 0
+    }
+  }
+  selectCity (index) {
+    asafonov.messageBus.send(asafonov.events.CITY_SELECTED, {index})
+    const pages = this.pagesButtons.querySelectorAll('.icon')
+    for (let i = 0; i < pages.length; ++i) {
+      if (i === index) {
+        pages[i].id = 'selected_page'
+      } else {
+        pages[i].removeAttribute('id')
+      }
+    }
+  }
+  async onAddClick() {
+    let city = prompt('Please enter the city in English')
+    if (city) {
+      city = city.toLowerCase()
+      const model = new Forecast(city)
+      const data = await model.getData()
+      if (data) {
+        const cities = asafonov.cache.getItem('cities') || []
+        if (cities.indexOf(city) === -1) {
+          cities.push(city)
+          asafonov.messageBus.send(asafonov.events.CITY_ADDED, {city})
+          asafonov.cache.set('cities', cities)
+          this.updatePagesButtons()
+        }
+      }
+      model.destroy()
+    }
+  }
+  addEventListeners() {
+    this.addButton.addEventListener('click', this.onAddClickProxy)
+  }
+  removeEventListeners() {
+    this.addButton.removeEventListener('click', this.onAddClickProxy)
+  }
+  destroy() {
+    this.removeEventListeners()
+    this.addButton = null
+    this.pagesButtons.innerHTML = ''
+    this.pagesButtons = null
+  }
+}
 window.asafonov = {}
 window.asafonov.version = '0.1'
 window.asafonov.messageBus = new MessageBus()
-window.asafonov.cache = new Cache(600)
+window.asafonov.cache = new Cache(600000)
 window.asafonov.events = {
+  CITY_ADDED: 'CITY_ADDED',
+  CITY_SELECTED: 'CITY_SELECTED'
 }
 window.asafonov.settings = {
-  apiUrl: 'http://isengard.asafonov.org/weather/'
+  apiUrl: 'http://isengard.asafonov.org/weather/',
+  defaultCity: 'Belgrade'
 }
 window.onerror = (msg, url, line) => {
   if (!! window.asafonov.debug) alert(`${msg} on line ${line}`)
 }
 document.addEventListener("DOMContentLoaded", function (event) {
-  const forecast = new ForecastView()
-  forecast.display()
+  const view = new ControlView()
 })
