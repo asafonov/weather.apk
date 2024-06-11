@@ -30,7 +30,8 @@ class Cache {
 }
 class Forecast {
   constructor (place) {
-    this.place = place.charAt(0).toUpperCase() + place.slice(1).toLowerCase()
+    const capitalize = v => v.charAt(0).toUpperCase() + v.slice(1).toLowerCase()
+    this.place = place.split(' ').map(i => capitalize(i)).join(' ')
   }
   getPlace() {
     return this.place
@@ -85,15 +86,15 @@ class Forecast {
             data.daily[index].snow = Math.max(apiResp[i].snow || 0, data.daily[index].snow)
             data.daily[index].wind_speed = Math.max(apiResp[i].wind_speed || 0, data.daily[index].wind_speed)
             data.daily[index].clouds += (apiResp[i].clouds || 0) / 8
-            if (h >= '02' && h < '05') {
-              data.daily[index].morning = apiResp[i].temp
+            if (h >= '00' && h <= '08') {
+              data.daily[index].morning = data.daily[index].morning !== undefined ? Math.min(data.daily[index].morning, apiResp[i].temp) : apiResp[i].temp
             }
-            if (h > '12' && h <= '15') {
-              data.daily[index].temp = apiResp[i].temp
+            if (h > '08' && h <= '20') {
+              data.daily[index].temp = data.daily[index].temp !== undefined ? Math.max(data.daily[index].temp, apiResp[i].temp) : apiResp[i].temp
               data.daily[index].wind_direction = apiResp[i].wind_direction
             }
-            if (h >= '21') {
-              data.daily[index].evening = apiResp[i].temp
+            if (h > '20') {
+              data.daily[index].evening = data.daily[index].evening !== undefined ? Math.min(data.daily[index].evening, apiResp[i].temp) : apiResp[i].temp
             }
           }
           if (i <= 16) {

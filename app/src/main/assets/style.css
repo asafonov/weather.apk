@@ -44,7 +44,6 @@ u, p, input, label, textarea, select, option {
   vertical-align: top;
   z-index: auto;
   box-sizing: border-box;
-  transition: 1s ease-in-out;
 }
 html,
 body {
