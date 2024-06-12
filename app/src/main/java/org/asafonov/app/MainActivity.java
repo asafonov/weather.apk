@@ -21,6 +21,7 @@ public class MainActivity extends Activity {
         webSettings.setDomStorageEnabled(true);
         webSettings.setCacheMode(WebSettings.LOAD_NO_CACHE);
         mWebView.setWebViewClient(new MyWebViewClient());
+        mWebView.setWebChromeClient(new MyWebChromeClient());
         mWebView.clearCache(true);
         mWebView.clearHistory();
         mWebView.loadUrl("file:///android_asset/index.html");
