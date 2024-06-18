@@ -48,7 +48,8 @@ class Forecast {
       humidity: item.humidity,
       clouds: item.clouds,
       rain: item.rain,
-      snow: item.snow
+      snow: item.snow,
+      description: item.description
     }
   }
   getCachedData() {
@@ -243,7 +244,10 @@ class ForecastView {
     document.querySelector('.temperature .now').innerHTML = `${data.now.temp}°`
     document.querySelector('.temperature .max').innerHTML = `${data.now.max}°`
     document.querySelector('.temperature .min').innerHTML = `${data.now.min}°`
+    document.querySelector('.wind .wind_speed').innerHTML = data.now.wind_speed
+    document.querySelector('.wind .wind_direction').innerHTML = data.now.wind_direction
     document.querySelector('.city_time').innerHTML = this.getCurrentTime(data.now.timezone)
+    document.querySelector('.city_stats .description').innerHTML = data.now.description
     const icons = this.getIconByData(data.now)
     const iconDiv = document.querySelector('.icon_weather')
     iconDiv.innerHTML = this.getIcon(icons)

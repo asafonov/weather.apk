@@ -148,7 +148,8 @@ body {
   gap: var(--size16);
 }
 
-.item_line .stats .text_small::after {
+.item_line .stats .text_small::after,
+.item_main .wind .text_small::after {
   content: 'm/s';
   font-size: var(--size_font6);
   padding-left: var(--size_border2);
@@ -177,8 +178,13 @@ body {
   margin-top: var(--size24);
 }
 
-.item_main .icon_weather {
-  margin: var(--size16) 0 var(--size6) 0;
+.item_main .city_stats {
+  justify-content: space-between;
+}
+
+.item_main .wind {
+  gap: var(--size6);
+  margin-bottom: var(--size6);
 }
 
 .days_list {

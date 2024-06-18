@@ -115,22 +115,37 @@
       <div class="city flex_col centered">
         <div class="city_name text_h2">Tver</div>
         <div class="city_time text_accent text_opact">17:27</div>
-        <div class="icon icon_weather icon_big">
-          <svg class="icon_with">
-            <use xlink:href="#cloud_with"/>
-          </svg>
-          <svg class="icon_dop">
-            <use xlink:href="#rain"/>
-          </svg>
-          <svg class="icon_dop dop_second dop_duo">
-            <use xlink:href="#rain"/>
-          </svg>
+      </div>
+      <div class="city_stats flex_row centered">
+        <div>
+          <div class="icon icon_weather icon_dop_top icon_big">
+            <svg class="icon_with">
+              <use xlink:href="#sun"/>
+            </svg>
+            <svg class="icon_dop dop_second dop_special">
+              <use xlink:href="#wind"/>
+            </svg>
+          </div>  
+          <div class="text_small text_accent description">cloudy with lightning alert</div>
         </div>
-        <div class="temperature flex_row">
-          <div class="text_h1 now">12°</div>
-          <div class="limit flex_col">
-            <div class="max text_accent text_opact">15°</div>
-            <div class="min text_accent text_opact">7°</div>
+        <div>
+          <div class="temperature flex_row">
+            <div class="text_h1 now">12°</div>
+            <div class="limit flex_col">
+              <div class="max text_accent text_opact max">15°</div>
+              <div class="min text_accent text_opact min">7°</div>
+            </div>
+          </div>
+          <div class="wind flex_row">
+            <div class="text_small text_accent wind_speed">3.5</div>
+            <div class="direction flex_row centered">
+              <div class="icon icon_fill icon_compas compas_sw">
+                <svg>
+                  <use xlink:href="#direction"/> 
+                </svg>
+              </div>
+              <div class="text_small_dop text_accent wind_direction">SW</div>
+            </div>
           </div>
         </div>
       </div>
