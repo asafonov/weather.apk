@@ -272,7 +272,7 @@ class ForecastView {
     const iconDiv = this.container.querySelector('.icon_big')
     const [html, classes] = this.getIcon(icons)
     iconDiv.innerHTML = html
-    classes.map(i => iconDiv.classList.append(i))
+    classes.map(i => iconDiv.classList.add(i))
     const hourlyDiv = this.container.querySelector('.scroll_line')
     hourlyDiv.innerHTML = ''
     for (let i = 0; i < data.hourly.length; ++i) {
