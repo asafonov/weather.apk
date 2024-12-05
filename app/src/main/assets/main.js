@@ -159,16 +159,17 @@ class MessageBus {
 class ControlView {
   constructor() {
     this.addEventListeners()
-    this.navigationView = new NavigationView()
+    this.container = document.querySelector('#forecast')
+    this.navigationView = new NavigationView(this.container)
     this.forecastViews = []
     const cities = asafonov.cache.getItem('cities')
     if (cities && cities.length > 0) {
       for (let i = 0; i < cities.length; ++i) {
-        this.forecastViews.push(new ForecastView(cities[i]))
+        this.forecastViews.push(new ForecastView(cities[i], this.container))
       }
       this.displayForecast()
     } else {
-      const forecastView = new ForecastView(asafonov.settings.defaultCity)
+      const forecastView = new ForecastView(asafonov.settings.defaultCity, this.container)
       forecastView.display()
     }
   }
@@ -207,31 +208,50 @@ class ControlView {
   }
 }
 class ForecastView {
-  constructor (place) {
+  constructor (place, container) {
+    this.container = container
     this.model = new Forecast(place)
   }
   getIconByData (data) {
-    const icons = []
-    icons.push(data.clouds > 75 || data.rain || data.snow ? 'cloud' : data.hour >= '20' || data.hour < '08' ? 'moon' : 'sun')
-    if (! data.rain && ! data.snow && data.clouds >= 25 && data.clouds <= 75) icons.push('cloud')
-    if (data.rain) icons.push('rain')
-    if (data.rain > 1) icons.push('rain')
-    if (data.wind_speed > 8) icons.push('wind')
-    if (icons.length > 1 && icons[0] === 'cloud') icons[0] = 'cloud_with'
+    const icons = {main: []}
+    if (data.rain || data.snow) {
+      icons.main.push('cloud')
+      icons.precip = []
+      if (data.rain) icons.precip.push('raindrop')
+      if (data.rain > 1) icons.precip.push('raindrop')
+      if (data.snow) icons.precip.push('snowflake')
+      if (data.snow > 1) icons.precip.push('snowflake')
+      return icons
+    }
+    icons.main.push(data.clouds > 75 ? 'cloudy' : data.hour >= '20' || data.hour < '08' ? 'moon' : 'sun')
+    if (data.clouds >= 25 && data.clouds <= 75) icons.main.push('cloudy')
+    if (data.wind_speed > 8) icons.main.push('wind')
     return icons
   }
   getIcon (icons) {
-    let ret = `<svg ${icons.length > 1 ? 'class="icon_with"' : ''}><use xlink:href="#${icons[0]}" /></svg>`
-    if (icons.length > 1) ret += `<svg class="icon_dop"><use xlink:href="#${icons[1]}" /></svg>`
-    if (icons.length > 2) ret += `<svg class="icon_dop dop_second dop_duo"><use xlink:href="#${icons[2]}" /></svg>`
-    return ret
+    let ret = ''
+    if (icons.precip && icons.precip.length > 0) {
+      ret += `<div class="icon_main"><svg><use xlink:href="#${icons.main[0]}"/></svg></div><div class="icon_precip">`
+      for (let i = 0; i < icons.precip.length; ++i) {
+        ret += `<svg><use xlink:href="#${icons.precip[i]}"/></svg>`
+      }
+      ret += '</div>'
+      return [ret, ['icon_with_precip']]
+    }
+    for (let i = 0; i < icons.main.length; ++i) {
+      ret += `<div class="icon_wrap"><svg><use xlink:href="#${icons.main[i]}"/></svg></div>`
+    }
+    const classes = []
+    icons.main.length === 2 && classes.push('icon_double')
+    icons.main.length === 3 && classes.push('icon_tripple')
+    return [ret, classes]
   }
   getDayName (day) {
     const dayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
     return dayNames[day - 1]
   }
   async display() {
-    document.querySelector('.city_name').innerHTML = this.model.getPlace()
+    this.container.querySelector('.city_name').innerHTML = this.model.getPlace()
     this.displayData(this.model.getCachedData())
     const data = await this.model.getData()
     this.displayData(data)
@@ -241,49 +261,52 @@ class ForecastView {
   }
   displayData (data) {
     if (! data) return
-    document.querySelector('.temperature .now').innerHTML = `${data.now.temp}°`
-    document.querySelector('.temperature .max').innerHTML = `${data.now.max}°`
-    document.querySelector('.temperature .min').innerHTML = `${data.now.min}°`
-    document.querySelector('.wind .wind_speed').innerHTML = data.now.wind_speed
-    document.querySelector('.wind .wind_direction').innerHTML = data.now.wind_direction
-    document.querySelector('.city_time').innerHTML = this.getCurrentTime(data.now.timezone)
-    document.querySelector('.city_stats .description').innerHTML = data.now.description
+    this.container.querySelector('.temperature .now').innerHTML = `${data.now.temp}°`
+    this.container.querySelector('.temperature .max').innerHTML = `${data.now.max}°`
+    this.container.querySelector('.temperature .min').innerHTML = `${data.now.min}°`
+    this.container.querySelector('.wind .wind_speed').innerHTML = data.now.wind_speed
+    this.container.querySelector('.wind .wind_direction').innerHTML = data.now.wind_direction
+    this.container.querySelector('.city_time').innerHTML = this.getCurrentTime(data.now.timezone)
+    this.container.querySelector('.city_stats .description').innerHTML = data.now.description
     const icons = this.getIconByData(data.now)
-    const iconDiv = document.querySelector('.icon_weather')
-    iconDiv.innerHTML = this.getIcon(icons)
-    iconDiv.classList[data.now.rain ? 'remove' : 'add']('icon_dop_top')
-    const hourlyDiv = document.querySelector('.scroll_line')
+    const iconDiv = this.container.querySelector('.icon_big')
+    const [html, classes] = this.getIcon(icons)
+    iconDiv.innerHTML = html
+    classes.map(i => iconDiv.classList.append(i))
+    const hourlyDiv = this.container.querySelector('.scroll_line')
     hourlyDiv.innerHTML = ''
     for (let i = 0; i < data.hourly.length; ++i) {
+      const [html, classes] = this.getIcon(this.getIconByData(data.hourly[i]))
       hourlyDiv.innerHTML +=
         `<div class="item_scroll_line flex_col centered">
           <div class="text_accent">${data.hourly[i].hour}</div>
-          <div class="icon icon_weather icon_normal${data.hourly[i].rain ? '' : ' icon_dop_top'}">
-            ${this.getIcon(this.getIconByData(data.hourly[i]))}
+          <div class="icon_wrap icon_normal icon_scroll_line ${classes.join(' ')}">
+            ${html}
           </div>
           <div class="text_h3">${data.hourly[i].temp}°</div>
         </div>`
     }
-    const dailyDiv = document.querySelector('.days_list')
+    const dailyDiv = this.container.querySelector('.days_list')
     dailyDiv.innerHTML = ''
     for (let i = 0; i < data.daily.length; ++i) {
       if (data.daily[i].evening === undefined || data.daily[i].evening === null) break
+      const [html, classes] = this.getIcon(this.getIconByData(data.daily[i]))
       dailyDiv.innerHTML +=
         `<div class="item_days_list flex_row centered">
           <div class="day_name">${i === 0 ? 'Tomorrow' : this.getDayName(data.daily[i].day)}</div>
           <div class="right_part flex_row centered">
-            <div class="icon icon_weather icon_normal${data.daily[i].rain ? '' : ' icon_dop_top'}">
-              ${this.getIcon(this.getIconByData(data.daily[i]))}
+            <div class="icon_wrap icon_normal ${classes.join(' ')}">
+              ${html}
             </div>
             <div class="temperature flex_row">
               <div class="text_accent">${data.daily[i].morning}°</div>
-              <div class="icon icon_small">
+              <div class="icon_wrap icon_small icon_opact">
                 <svg>
                   <use xlink:href="#sun_up"/>
                 </svg>
               </div>
               <div class="text_h3">${data.daily[i].temp}°</div>
-              <div class="icon icon_small">
+              <div class="icon_wrap icon_small icon_opact">
                 <svg>
                   <use xlink:href="#sun_down"/>
                 </svg>
@@ -293,7 +316,7 @@ class ForecastView {
             <div class="wind flex_row centered">
               <div class="power">${data.daily[i].wind_speed}</div>
               <div class="direction flex_col centered">
-                <div class="icon icon_fill icon_compas compas_se">
+                <div class="icon_wrap icon_fill icon_compas compas_se">
                   <svg>
                     <use xlink:href="#direction"/>
                   </svg>
@@ -306,17 +329,20 @@ class ForecastView {
     }
   }
   destroy() {
+    this.container = null
     this.model.destroy()
     this.model = null
   }
 }
 class NavigationView {
  
-  constructor() {
-    const navigationContainer = document.querySelector('.navigation')
+  constructor (container) {
+    const navigationContainer = container.querySelector('.navigation')
     this.addButton = navigationContainer.querySelector('.icon_add')
+    this.listButton = navigationContainer.querySelector('.icon_list')
     this.pagesButtons = navigationContainer.querySelector('.pages')
     this.onAddClickProxy = this.onAddClick.bind(this)
+    this.onListClickProxy = this.onListClick.bind(this)
     this.addEventListeners()
     this.updatePagesButtons()
   }
@@ -328,7 +354,7 @@ class NavigationView {
       this.pagesButtons.innerHTML = ''
       for (let i = 0; i < cities.length; ++i) {
         const div = document.createElement('div')
-        div.className = 'icon icon_small'
+        div.className = 'icon_wrap icon_small icon_pages'
         if (i === city) div.id = 'selected_page'
         div.innerHTML = '<svg><use xlink:href="#pages"/></svg>'
         div.addEventListener('click', () => this.selectCity(i))
@@ -340,7 +366,7 @@ class NavigationView {
   }
   selectCity (index) {
     asafonov.messageBus.send(asafonov.events.CITY_SELECTED, {index})
-    const pages = this.pagesButtons.querySelectorAll('.icon')
+    const pages = this.pagesButtons.querySelectorAll('.icon_pages')
     for (let i = 0; i < pages.length; ++i) {
       if (i === index) {
         pages[i].id = 'selected_page'
@@ -367,11 +393,15 @@ class NavigationView {
       model.destroy()
     }
   }
+  onListClick() {
+  }
   addEventListeners() {
     this.addButton.addEventListener('click', this.onAddClickProxy)
+    this.listButton.addEventListener('click', this.onListClickProxy)
   }
   removeEventListeners() {
     this.addButton.removeEventListener('click', this.onAddClickProxy)
+    this.listButton.removeEventListener('click', this.onListClickProxy)
   }
   destroy() {
     this.removeEventListeners()
@@ -390,7 +420,7 @@ window.asafonov.events = {
 }
 window.asafonov.settings = {
   apiUrl: 'http://isengard.asafonov.org/api/v1/weather/',
-  defaultCity: 'Belgrade'
+  defaultCity: 'Tver'
 }
 window.onerror = (msg, url, line) => {
   if (!! window.asafonov.debug) alert(`${msg} on line ${line}`)
