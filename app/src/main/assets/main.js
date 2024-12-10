@@ -190,7 +190,7 @@ class ControlView {
     asafonov.messageBus.unsubscribe(asafonov.events.CITY_SELECTED, this, 'onCitySelected')
   }
   onCityAdded ({city}) {
-    this.forecastViews.push(new ForecastView(city))
+    this.forecastViews.push(new ForecastView(city, this.container))
     this.displayForecast(this.forecastViews.length - 1)
   }
   onCitySelected ({index}) {
@@ -212,15 +212,24 @@ class ForecastView {
     this.container = container
     this.model = new Forecast(place)
   }
+  getPrecipIcons (value, iconNames) {
+    const ret = []
+    const values = [0, 0.25, 2.5, 8]
+    for (let i = 0; i < values.length; ++i) {
+      if (value > values[i]) ret.push(iconNames[i % iconNames.length])
+    }
+    return ret
+  }
   getIconByData (data) {
     const icons = {main: []}
-    if (data.rain || data.snow) {
+    if (data.rain && data.snow) {
       icons.main.push('cloud')
-      icons.precip = []
-      if (data.rain) icons.precip.push('raindrop')
-      if (data.rain > 1) icons.precip.push('raindrop')
-      if (data.snow) icons.precip.push('snowflake')
-      if (data.snow > 1) icons.precip.push('snowflake')
+      const precipVariants = data.rain > data.snow ? ['raindrop', 'snowflake'] : ['snowflake', 'raindrop']
+      icons.precip = this.getPrecipIcons(data.rain + data.snow, precipVariants)
+      console.log(data.rain, data.snow, icons.precip)
+    } else if (data.rain || data.snow) {
+      icons.main.push('cloud')
+      icons.precip = this.getPrecipIcons(data.rain, ['raindrop']).concat(this.getPrecipIcons(data.snow, ['snowflake']))
       return icons
     }
     icons.main.push(data.clouds > 75 ? 'cloudy' : data.hour >= '20' || data.hour < '08' ? 'moon' : 'sun')
