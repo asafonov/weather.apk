@@ -1,1 +1,1 @@
-Initial release for F-Droid
+A lot of fixes for new icons
