@@ -52,6 +52,9 @@ class Forecast {
       description: item.description
     }
   }
+  deleteCachedData() {
+    asafonov.cache.remove(this.place)
+  }
   getCachedData() {
     return asafonov.cache.getItem(this.place)
   }
@@ -173,21 +176,29 @@ class ControlView {
       forecastView.display()
     }
   }
+  getCurrentCityIndex() {
+    let index = asafonov.cache.getItem('city')
+    if (index === null || index ===undefined || index > this.forecastViews.length - 1) index = this.forecastViews.length - 1
+    return index
+  }
   displayForecast (index) {
     if (index === null || index === undefined) {
-      index = asafonov.cache.getItem('city')
-      if (index === null || index ===undefined || index > this.forecastViews.length - 1) index = this.forecastViews.length - 1
+      index = this.getCurrentCityIndex()
     }
-    asafonov.cache.set('city', index)
-    this.forecastViews[index].display()
+    if (index > -1) {
+      asafonov.cache.set('city', index)
+      this.forecastViews[index].display()
+    }
   }
   addEventListeners() {
     asafonov.messageBus.subscribe(asafonov.events.CITY_ADDED, this, 'onCityAdded')
     asafonov.messageBus.subscribe(asafonov.events.CITY_SELECTED, this, 'onCitySelected')
+    asafonov.messageBus.subscribe(asafonov.events.CITY_REMOVED, this, 'onCityRemoved')
   }
   removeEventListeners() {
     asafonov.messageBus.unsubscribe(asafonov.events.CITY_ADDED, this, 'onCityAdded')
     asafonov.messageBus.unsubscribe(asafonov.events.CITY_SELECTED, this, 'onCitySelected')
+    asafonov.messageBus.unsubscribe(asafonov.events.CITY_REMOVED, this, 'onCityRemoved')
   }
   onCityAdded ({city}) {
     this.forecastViews.push(new ForecastView(city, this.container))
@@ -195,6 +206,12 @@ class ControlView {
   }
   onCitySelected ({index}) {
     this.displayForecast(index)
+  }
+  onCityRemoved({index}) {
+    this.forecastViews[index].destroy()
+    this.forecastViews[index] = null
+    this.forecastViews.splice(index, 1)
+    this.displayForecast()
   }
   destroy() {
     for (let i = 0; i < this.forecastViews.length; ++i) {
@@ -226,7 +243,6 @@ class ForecastView {
       icons.main.push('cloud')
       const precipVariants = data.rain > data.snow ? ['raindrop', 'snowflake'] : ['snowflake', 'raindrop']
       icons.precip = this.getPrecipIcons(data.rain + data.snow, precipVariants)
-      console.log(data.rain, data.snow, icons.precip)
     } else if (data.rain || data.snow) {
       icons.main.push('cloud')
       icons.precip = this.getPrecipIcons(data.rain, ['raindrop']).concat(this.getPrecipIcons(data.snow, ['snowflake']))
@@ -358,6 +374,7 @@ class NavigationView {
   updatePagesButtons (selected) {
     const cities = asafonov.cache.getItem('cities')
     const city = selected || asafonov.cache.getItem('city')
+    this.listButton.style.opacity = cities && cities.length > 0 ? 1 : 0
     if (cities && cities.length > 1) {
       this.pagesButtons.style.opacity = 1
       this.pagesButtons.innerHTML = ''
@@ -403,6 +420,22 @@ class NavigationView {
     }
   }
   onListClick() {
+    if (confirm('Are you sure you want to delete current city?')) {
+      const cities = asafonov.cache.getItem('cities')
+      const city = asafonov.cache.getItem('city')
+      const model = new Forecast(cities[city])
+      model.deleteCachedData()
+      model.destroy()
+      cities.splice(city, 1)
+      asafonov.cache.remove('city')
+      if (cities.length > 0) {
+        asafonov.cache.set('cities', cities)
+      } else {
+        asafonov.cache.remove('cities')
+      }
+      this.updatePagesButtons(cities.length -1)
+      asafonov.messageBus.send(asafonov.events.CITY_REMOVED, {index: city})
+    }
   }
   addEventListeners() {
     this.addButton.addEventListener('click', this.onAddClickProxy)
@@ -425,7 +458,8 @@ window.asafonov.messageBus = new MessageBus()
 window.asafonov.cache = new Cache(600000)
 window.asafonov.events = {
   CITY_ADDED: 'CITY_ADDED',
-  CITY_SELECTED: 'CITY_SELECTED'
+  CITY_SELECTED: 'CITY_SELECTED',
+  CITY_REMOVED: 'CITY_REMOVED'
 }
 window.asafonov.settings = {
   apiUrl: 'http://isengard.asafonov.org/api/v1/weather/',

@@ -1,0 +1,2 @@
+The simple weather application that displays data
+from openweathermap in a nice and elegant way
