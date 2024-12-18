@@ -1,1 +1,1 @@
-Weather
+Weather: Cool and Hot
