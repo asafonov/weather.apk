@@ -78,7 +78,7 @@ class Forecast {
               if (data.daily[index].rain < 0.5) data.daily[index].rain = 0
               if (data.daily[index].snow < 0.5) data.daily[index].snow = 0
             }
-            data.daily.push({rain: 0, snow: 0, clouds: 0, wind_speed: 0, day: apiResp[i].day})
+            data.daily.push({rain: 0, snow: 0, clouds: 0, wind_speed: 0, day: apiResp[i].day, date: apiResp[i].date})
             prevDate = d
           }
           if (d === date) {
@@ -271,9 +271,16 @@ class ForecastView {
     icons.main.length === 3 && classes.push('icon_tripple')
     return [ret, classes]
   }
-  getDayName (day) {
-    const dayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
-    return dayNames[day - 1]
+  getDayName (day, date) {
+    const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+    let ret = dayNames[day - 1]
+    if (date) {
+      const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+      const m = parseInt(date.substr(5, 2), 10)
+      const d = date.substr(8, 2)
+      ret += `,&nbsp;${monthNames[m - 1]}&nbsp;${d}`
+    }
+    return ret
   }
   async display() {
     this.container.querySelector('.city_name').innerHTML = this.model.getPlace()
@@ -318,7 +325,7 @@ class ForecastView {
       const [html, classes] = this.getIcon(this.getIconByData(data.daily[i]))
       dailyDiv.innerHTML +=
         `<div class="item_days_list flex_row centered">
-          <div class="day_name">${i === 0 ? 'Tomorrow' : this.getDayName(data.daily[i].day)}</div>
+          <div class="day_name">${i === 0 ? 'Tomorrow' : this.getDayName(data.daily[i].day, data.daily[i].date)}</div>
           <div class="right_part flex_row centered">
             <div class="icon_wrap icon_normal ${classes.join(' ')}">
               ${html}
