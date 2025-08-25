@@ -293,6 +293,17 @@ class ForecastView {
   getCurrentTime (timezone) {
     return new Date(new Date().getTime() + (timezone || 0) * 1000).toISOString().substr(11, 5)
   }
+  getWindRotation (wind_direction) {
+    if (wind_direction === 'S') return 0
+    if (wind_direction === 'SW') return 45
+    if (wind_direction === 'W') return 90
+    if (wind_direction === 'NW') return 135
+    if (wind_direction === 'N') return 180
+    if (wind_direction === 'NE') return 225
+    if (wind_direction === 'E') return 270
+    if (wind_direction === 'SE') return 315
+    return 0
+  }
   displayData (data) {
     if (! data) return
     this.container.querySelector('.temperature .now').innerHTML = `${data.now.temp}°`
@@ -300,6 +311,7 @@ class ForecastView {
     this.container.querySelector('.temperature .min').innerHTML = `${data.now.min}°`
     this.container.querySelector('.wind .wind_speed').innerHTML = data.now.wind_speed
     this.container.querySelector('.wind .wind_direction').innerHTML = data.now.wind_direction
+    this.container.querySelector('.wind .icon_compas').style.transform = `rotate(${this.getWindRotation(data.now.wind_direction)}deg)`
     this.container.querySelector('.city_time').innerHTML = this.getCurrentTime(data.now.timezone)
     this.container.querySelector('.city_stats .description').innerHTML = data.now.description
     const icons = this.getIconByData(data.now)
@@ -350,7 +362,7 @@ class ForecastView {
             <div class="wind flex_row centered">
               <div class="power">${data.daily[i].wind_speed}</div>
               <div class="direction flex_col centered">
-                <div class="icon_wrap icon_fill icon_compas compas_se">
+                <div class="icon_wrap icon_fill icon_compas compas_se" style="transform: rotate(${this.getWindRotation(data.daily[i].wind_direction)}deg)">
                   <svg>
                     <use xlink:href="#direction"/>
                   </svg>
