@@ -6,9 +6,9 @@ android {
     defaultConfig {
         applicationId "org.asafonov.weather"
         minSdkVersion 21
-        targetSdkVersion 33
-        versionCode 12
-        versionName "0.12"
+        targetSdkVersion 35
+        versionCode 13
+        versionName "0.13"
     }
     buildTypes {
         release {
