@@ -483,7 +483,7 @@ window.asafonov.events = {
   CITY_REMOVED: 'CITY_REMOVED'
 }
 window.asafonov.settings = {
-  apiUrl: 'http://isengard.asafonov.org/api/v1/weather/',
+  apiUrl: 'https://242203.xyrufkn4ixok.majordomo-hosting.ru/api/v1/weather/',
   defaultCity: 'Moscow'
 }
 window.onerror = (msg, url, line) => {
