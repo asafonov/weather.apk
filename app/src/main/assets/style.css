@@ -46,6 +46,8 @@
   --size_border_iconS: calc(var(--size4)/2.5);
   --size_border_iconThin: calc(var(--size4)/1.5);
   --size_border_icon_precip: var(--size4);
+
+  --after-system: 'm/s';
 }
 
 *, html, body, h1, h2, h3, h4, h5, h6, a, img, ul, ol, li, div, span, b, time, mark,
@@ -167,7 +169,7 @@ body {
 
 .item_line .stats .text_small::after,
 .item_main .wind .text_small::after {
-  content: 'm/s';
+  content: var(--after-system);
   font-size: var(--size_font6);
   padding-left: var(--size_border2);
 }
@@ -230,7 +232,7 @@ body {
 }
 
 .item_days_list .wind .power::after {
-  content: 'm/s';
+  content: var(--after-system);
   display: block;
   font-size: var(--size_font8);
   color: var(--color_accent);
@@ -404,7 +406,8 @@ svg * {
 }
 
 .navigation .search_section .search_field,
-.navigation .search_section .search_result_list {
+.navigation .search_section .search_result_list,
+.navigation .settings_list {
   width: 100%;
   background-color: var(--color_secondary);
   border-radius: var(--size8);
@@ -440,7 +443,8 @@ svg * {
   outline: none;
 }
 
-.navigation .search_result_list {
+.navigation .search_result_list,
+.navigation .settings_list {
   position: absolute;
   z-index: 99;
   top: 100%;
@@ -448,7 +452,13 @@ svg * {
   gap: var(--size8);
 }
 
-.navigation .search_result_list .divider {
+.navigation .settings_list {
+  top: 0;
+  display: none;
+}
+
+.navigation .search_result_list .divider,
+.navigation .settings_list .divider {
   width: 100%;
   left: 0;
   background-color: var(--color_primary);
