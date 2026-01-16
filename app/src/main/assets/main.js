@@ -174,8 +174,8 @@ class ControlView {
       }
       this.displayForecast()
     } else {
-      const forecastView = new ForecastView(asafonov.settings.defaultCity, this.container)
-      forecastView.display()
+      this.defaultForecastView = new ForecastView(asafonov.settings.defaultCity, this.container)
+      this.defaultForecastView.display()
     }
   }
   getCurrentCityIndex() {
@@ -196,11 +196,20 @@ class ControlView {
     asafonov.messageBus.subscribe(asafonov.events.CITY_ADDED, this, 'onCityAdded')
     asafonov.messageBus.subscribe(asafonov.events.CITY_SELECTED, this, 'onCitySelected')
     asafonov.messageBus.subscribe(asafonov.events.CITY_REMOVED, this, 'onCityRemoved')
+    asafonov.messageBus.subscribe(asafonov.events.USE_SYSTEM_UPDATED, this, 'onUseSystemUpdated')
   }
   removeEventListeners() {
     asafonov.messageBus.unsubscribe(asafonov.events.CITY_ADDED, this, 'onCityAdded')
     asafonov.messageBus.unsubscribe(asafonov.events.CITY_SELECTED, this, 'onCitySelected')
     asafonov.messageBus.unsubscribe(asafonov.events.CITY_REMOVED, this, 'onCityRemoved')
+    asafonov.messageBus.unsubscribe(asafonov.events.USE_SYSTEM_UPDATED, this, 'onUseSystemUpdated')
+  }
+  onUseSystemUpdated() {
+    const index = this.getCurrentCityIndex()
+    if (index > -1)
+      this.displayForecast(index)
+    else if (this.defaultForecastView)
+      this.defaultForecastView.display()
   }
   onCityAdded ({city}) {
     this.forecastViews.push(new ForecastView(city, this.container))
@@ -223,6 +232,7 @@ class ControlView {
     this.forecastViews = null
     this.navigationView.destroy()
     this.navigationView = null
+    this.defaultForecastView = null
     this.removeEventListeners()
   }
 }
@@ -230,6 +240,12 @@ class ForecastView {
   constructor (place, container) {
     this.container = container
     this.model = new Forecast(place)
+  }
+  toFahrenheit (v) {
+    return Math.round(v * 9 / 5 + 32)
+  }
+  toMPH (v) {
+    return Math.round(v * 2.23694)
   }
   getPrecipIcons (value, iconNames) {
     const ret = []
@@ -306,10 +322,12 @@ class ForecastView {
   }
   displayData (data) {
     if (! data) return
-    this.container.querySelector('.temperature .now').innerHTML = `${data.now.temp}°`
-    this.container.querySelector('.temperature .max').innerHTML = `${data.now.max}°`
-    this.container.querySelector('.temperature .min').innerHTML = `${data.now.min}°`
-    this.container.querySelector('.wind .wind_speed').innerHTML = data.now.wind_speed
+    const useImperialSystem = !! asafonov.cache.getItem('useImperialSystem')
+    document.documentElement.style.setProperty('--after-system', useImperialSystem ? '"mph"' : '"m/s"')
+    this.container.querySelector('.temperature .now').innerHTML = `${useImperialSystem ? this.toFahrenheit(data.now.temp) : data.now.temp}°`
+    this.container.querySelector('.temperature .max').innerHTML = `${useImperialSystem ? this.toFahrenheit(data.now.max) : data.now.max}°`
+    this.container.querySelector('.temperature .min').innerHTML = `${useImperialSystem ? this.toFahrenheit(data.now.min) : data.now.min}°`
+    this.container.querySelector('.wind .wind_speed').innerHTML = useImperialSystem ? this.toMPH(data.now.wind_speed) : data.now.wind_speed
     this.container.querySelector('.wind .wind_direction').innerHTML = data.now.wind_direction
     this.container.querySelector('.wind .icon_compas').style.transform = `rotate(${this.getWindRotation(data.now.wind_direction)}deg)`
     this.container.querySelector('.city_time').innerHTML = this.getCurrentTime(data.now.timezone)
@@ -329,7 +347,7 @@ class ForecastView {
           <div class="icon_wrap icon_normal icon_scroll_line ${classes.join(' ')}">
             ${html}
           </div>
-          <div class="text_h3">${data.hourly[i].temp}°</div>
+          <div class="text_h3">${useImperialSystem ? this.toFahrenheit(data.hourly[i].temp) : data.hourly[i].temp}°</div>
         </div>`
     }
     const dailyDiv = this.container.querySelector('.days_list')
@@ -345,22 +363,22 @@ class ForecastView {
               ${html}
             </div>
             <div class="temperature flex_row">
-              <div class="text_accent">${data.daily[i].morning}°</div>
+              <div class="text_accent">${useImperialSystem ? this.toFahrenheit(data.daily[i].morning) : data.daily[i].morning}°</div>
               <div class="icon_wrap icon_small icon_opact">
                 <svg>
                   <use xlink:href="#sun_up"/>
                 </svg>
               </div>
-              <div class="text_h3">${data.daily[i].temp}°</div>
+              <div class="text_h3">${useImperialSystem ? this.toFahrenheit(data.daily[i].temp) : data.daily[i].temp}°</div>
               <div class="icon_wrap icon_small icon_opact">
                 <svg>
                   <use xlink:href="#sun_down"/>
                 </svg>
               </div>
-              <div class="text_accent">${data.daily[i].evening}°</div>
+              <div class="text_accent">${useImperialSystem ? this.toFahrenheit(data.daily[i].evening) : data.daily[i].evening}°</div>
             </div>
             <div class="wind flex_row centered">
-              <div class="power">${data.daily[i].wind_speed}</div>
+              <div class="power">${useImperialSystem ? this.toMPH(data.daily[i].wind_speed) : data.daily[i].wind_speed}</div>
               <div class="direction flex_col centered">
                 <div class="icon_wrap icon_fill icon_compas compas_se" style="transform: rotate(${this.getWindRotation(data.daily[i].wind_direction)}deg)">
                   <svg>
@@ -387,15 +405,25 @@ class NavigationView {
     this.addButton = navigationContainer.querySelector('.icon_add')
     this.listButton = navigationContainer.querySelector('.icon_list')
     this.pagesButtons = navigationContainer.querySelector('.pages')
+    this.menuContainer = navigationContainer.querySelector('.settings_list')
+    this.deleteCityButton = this.menuContainer.querySelector('.delete_city')
+    this.useSystemButton = this.menuContainer.querySelector('.use_system')
+    this.useImperialSystem = !! asafonov.cache.getItem('useImperialSystem')
+    this.updateUseSystemButtonTitle()
     this.onAddClickProxy = this.onAddClick.bind(this)
     this.onListClickProxy = this.onListClick.bind(this)
+    this.deleteCityProxy = this.deleteCity.bind(this)
+    this.useSystemProxy = this.useSystem.bind(this)
     this.addEventListeners()
     this.updatePagesButtons()
+  }
+  updateUseSystemButtonTitle() {
+    this.useSystemButton.innerHTML = this.useImperialSystem ? 'Use metric system' : 'Use imperial system'
   }
   updatePagesButtons (selected) {
     const cities = asafonov.cache.getItem('cities')
     const city = selected || asafonov.cache.getItem('city')
-    this.listButton.style.opacity = cities && cities.length > 0 ? 1 : 0
+    this.deleteCityButton.style.display = cities && cities.length > 0 ? 'flex' : 'none'
     if (cities && cities.length > 1) {
       this.pagesButtons.style.opacity = 1
       this.pagesButtons.innerHTML = ''
@@ -441,6 +469,21 @@ class NavigationView {
     }
   }
   onListClick() {
+    this.menuContainer.style.display = 'flex'
+  }
+  useSystem() {
+    this.menuContainer.style.display = 'none'
+    this.useImperialSystem = ! this.useImperialSystem
+    this.updateUseSystemButtonTitle()
+    if (this.useImperialSystem) {
+      asafonov.cache.set('useImperialSystem', '1')
+    } else {
+      asafonov.cache.remove('useImperialSystem')
+    }
+    asafonov.messageBus.send(asafonov.events.USE_SYSTEM_UPDATED)
+  }
+  deleteCity() {
+    this.menuContainer.style.display = 'none'
     if (confirm('Are you sure you want to delete current city?')) {
       const cities = asafonov.cache.getItem('cities')
       const city = asafonov.cache.getItem('city')
@@ -461,10 +504,14 @@ class NavigationView {
   addEventListeners() {
     this.addButton.addEventListener('click', this.onAddClickProxy)
     this.listButton.addEventListener('click', this.onListClickProxy)
+    this.deleteCityButton.addEventListener('click', this.deleteCityProxy)
+    this.useSystemButton.addEventListener('click', this.useSystemProxy)
   }
   removeEventListeners() {
     this.addButton.removeEventListener('click', this.onAddClickProxy)
     this.listButton.removeEventListener('click', this.onListClickProxy)
+    this.deleteCityButton.removeEventListener('click', this.deleteCityProxy)
+    this.useSystemButton.removeEventListener('click', this.useSystemProxy)
   }
   destroy() {
     this.removeEventListeners()
@@ -480,7 +527,8 @@ window.asafonov.cache = new Cache(600000)
 window.asafonov.events = {
   CITY_ADDED: 'CITY_ADDED',
   CITY_SELECTED: 'CITY_SELECTED',
-  CITY_REMOVED: 'CITY_REMOVED'
+  CITY_REMOVED: 'CITY_REMOVED',
+  USE_SYSTEM_UPDATED: 'USE_SYSTEM_UPDATED'
 }
 window.asafonov.settings = {
   apiUrl: 'https://242203.xyrufkn4ixok.majordomo-hosting.ru/api/v1/weather/',
