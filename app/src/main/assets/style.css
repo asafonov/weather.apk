@@ -291,6 +291,7 @@ svg * {
   display: flex;
   align-items: center;
   justify-content: center;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .icon_opact {
