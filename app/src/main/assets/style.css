@@ -389,6 +389,7 @@ svg * {
 
 .navigation .pages {
   gap: var(--size8);
+  -webkit-tap-highlight-color: transparent;
 }
 
 .navigation .pages #selected_page svg {
