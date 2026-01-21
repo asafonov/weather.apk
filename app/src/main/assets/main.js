@@ -405,25 +405,32 @@ class NavigationView {
     this.addButton = navigationContainer.querySelector('.icon_add')
     this.listButton = navigationContainer.querySelector('.icon_list')
     this.pagesButtons = navigationContainer.querySelector('.pages')
-    this.menuContainer = navigationContainer.querySelector('.settings_list')
-    this.deleteCityButton = this.menuContainer.querySelector('.delete_city')
-    this.useSystemButton = this.menuContainer.querySelector('.use_system')
+    this.popupWindow = document.querySelector('.popup_window')
+    this.deleteCityButton = this.popupWindow.querySelector('.delete_city')
+    this.useSystemButton = this.popupWindow.querySelector('.use_system')
+    this.closePopupButton = this.popupWindow.querySelector('.cancel_button')
+    this.popupWindow.querySelector('.ok_button').style.display = 'none'
     this.useImperialSystem = !! asafonov.cache.getItem('useImperialSystem')
     this.updateUseSystemButtonTitle()
     this.onAddClickProxy = this.onAddClick.bind(this)
     this.onListClickProxy = this.onListClick.bind(this)
     this.deleteCityProxy = this.deleteCity.bind(this)
     this.useSystemProxy = this.useSystem.bind(this)
+    this.closePopupProxy = this.closePopup.bind(this)
     this.addEventListeners()
     this.updatePagesButtons()
   }
   updateUseSystemButtonTitle() {
     this.useSystemButton.innerHTML = this.useImperialSystem ? 'Use metric system' : 'Use imperial system'
   }
+  setMenuButtonVisibility (buttonName, isVisible) {
+    this[buttonName].style.display = isVisible ? 'flex' : 'none'
+    this[buttonName].nextElementSibling.style.display = isVisible ? 'flex' : 'none'
+  }
   updatePagesButtons (selected) {
     const cities = asafonov.cache.getItem('cities')
     const city = selected || asafonov.cache.getItem('city')
-    this.deleteCityButton.style.display = cities && cities.length > 0 ? 'flex' : 'none'
+    this.setMenuButtonVisibility('deleteCityButton', cities && cities.length > 0)
     if (cities && cities.length > 1) {
       this.pagesButtons.style.opacity = 1
       this.pagesButtons.innerHTML = ''
@@ -469,10 +476,13 @@ class NavigationView {
     }
   }
   onListClick() {
-    this.menuContainer.style.display = 'flex'
+    this.popupWindow.style.display = 'flex'
+  }
+  closePopup() {
+    this.popupWindow.style.display = 'none'
   }
   useSystem() {
-    this.menuContainer.style.display = 'none'
+    this.closePopup()
     this.useImperialSystem = ! this.useImperialSystem
     this.updateUseSystemButtonTitle()
     if (this.useImperialSystem) {
@@ -483,7 +493,7 @@ class NavigationView {
     asafonov.messageBus.send(asafonov.events.USE_SYSTEM_UPDATED)
   }
   deleteCity() {
-    this.menuContainer.style.display = 'none'
+    this.closePopup()
     if (confirm('Are you sure you want to delete current city?')) {
       const cities = asafonov.cache.getItem('cities')
       const city = asafonov.cache.getItem('city')
@@ -506,12 +516,14 @@ class NavigationView {
     this.listButton.addEventListener('click', this.onListClickProxy)
     this.deleteCityButton.addEventListener('click', this.deleteCityProxy)
     this.useSystemButton.addEventListener('click', this.useSystemProxy)
+    this.closePopupButton.addEventListener('click', this.closePopupProxy)
   }
   removeEventListeners() {
     this.addButton.removeEventListener('click', this.onAddClickProxy)
     this.listButton.removeEventListener('click', this.onListClickProxy)
     this.deleteCityButton.removeEventListener('click', this.deleteCityProxy)
     this.useSystemButton.removeEventListener('click', this.useSystemProxy)
+    this.closePopupButton.removeEventListener('click', this.closePopupProxy)
   }
   destroy() {
     this.removeEventListeners()

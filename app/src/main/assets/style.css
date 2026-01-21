@@ -64,6 +64,12 @@ u, p, input, label, textarea, select, option {
   z-index: auto;
   box-sizing: border-box;
 }
+
+*:focus,
+*:focus-visible {
+  outline: none !important;
+}
+
 html,
 body {
   width: 100%;
@@ -408,8 +414,7 @@ svg * {
 }
 
 .navigation .search_section .search_field,
-.navigation .search_section .search_result_list,
-.navigation .settings_list {
+.navigation .search_section .search_result_list {
   width: 100%;
   background-color: var(--color_secondary);
   border-radius: var(--size8);
@@ -445,8 +450,7 @@ svg * {
   outline: none;
 }
 
-.navigation .search_result_list,
-.navigation .settings_list {
+.navigation .search_result_list {
   position: absolute;
   z-index: 99;
   top: 100%;
@@ -454,13 +458,46 @@ svg * {
   gap: var(--size8);
 }
 
-.navigation .settings_list {
-  top: 0;
+.popup_window {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  z-index: 999;
+  flex: 1;
+  justify-content: center;
+  align-items: center;
+  background-color: rgba(34, 38, 38, 0.8);
   display: none;
 }
 
+.popup_window .popup_block {
+  padding: var(--size12);
+  gap: var(--size8);
+  width: auto;
+  background-color: var(--color_secondary);
+  border-radius: var(--size8);
+  color: var(--color_primary);
+}
+
+.popup_window .popup_block .list_item,
+.popup_window .popup_block .buttons_item {
+  cursor: pointer;
+}
+
+.popup_window .popup_block .buttons {
+  gap: var(--size8);
+}
+
+.popup_window .popup_block .buttons .buttons_item {
+  background-color: var(--color_primary);
+  border-radius: var(--size8);
+  padding: var(--size_border1) var(--size8);
+  flex: 1;
+  text-align: center;
+}
+
 .navigation .search_result_list .divider,
-.navigation .settings_list .divider {
+.popup_block .divider {
   width: 100%;
   left: 0;
   background-color: var(--color_primary);
