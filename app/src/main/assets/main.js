@@ -482,7 +482,6 @@ class NavigationView {
     this.popupWindow.style.display = 'none'
   }
   useSystem() {
-    this.closePopup()
     this.useImperialSystem = ! this.useImperialSystem
     this.updateUseSystemButtonTitle()
     if (this.useImperialSystem) {
@@ -493,7 +492,6 @@ class NavigationView {
     asafonov.messageBus.send(asafonov.events.USE_SYSTEM_UPDATED)
   }
   deleteCity() {
-    this.closePopup()
     if (confirm('Are you sure you want to delete current city?')) {
       const cities = asafonov.cache.getItem('cities')
       const city = asafonov.cache.getItem('city')
@@ -517,6 +515,7 @@ class NavigationView {
     this.deleteCityButton.addEventListener('click', this.deleteCityProxy)
     this.useSystemButton.addEventListener('click', this.useSystemProxy)
     this.closePopupButton.addEventListener('click', this.closePopupProxy)
+    this.popupWindow.addEventListener('click', this.closePopupProxy)
   }
   removeEventListeners() {
     this.addButton.removeEventListener('click', this.onAddClickProxy)
@@ -524,6 +523,7 @@ class NavigationView {
     this.deleteCityButton.removeEventListener('click', this.deleteCityProxy)
     this.useSystemButton.removeEventListener('click', this.useSystemProxy)
     this.closePopupButton.removeEventListener('click', this.closePopupProxy)
+    this.popupWindow.removeEventListener('click', this.closePopupProxy)
   }
   destroy() {
     this.removeEventListeners()
