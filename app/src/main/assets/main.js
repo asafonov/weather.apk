@@ -543,7 +543,7 @@ window.asafonov.events = {
   USE_SYSTEM_UPDATED: 'USE_SYSTEM_UPDATED'
 }
 window.asafonov.settings = {
-  apiUrl: 'https://242203.xyrufkn4ixok.majordomo-hosting.ru/api/v1/weather/',
+  apiUrl: 'https://isengard.su/api/v1/weather/',
   defaultCity: 'Moscow'
 }
 window.onerror = (msg, url, line) => {

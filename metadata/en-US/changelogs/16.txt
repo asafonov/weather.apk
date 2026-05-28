@@ -1,1 +1,1 @@
-* fix closing popup by clicking outside of it
+switching to better performance api
