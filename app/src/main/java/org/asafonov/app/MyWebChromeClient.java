@@ -10,8 +10,13 @@ import android.webkit.WebView;
 import android.webkit.WebChromeClient;
 import android.webkit.JsResult;
 import android.webkit.JsPromptResult;
+import android.webkit.GeolocationPermissions;
 
 class MyWebChromeClient extends WebChromeClient {
+    @Override
+    public void onGeolocationPermissionShowPrompt(String origin, GeolocationPermissions.Callback callback) {
+        callback.invoke(origin, true, false);
+    }
 
     @Override
     public boolean onJsAlert(WebView view, String url, String message, final JsResult result) {

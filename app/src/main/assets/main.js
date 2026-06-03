@@ -29,9 +29,20 @@ class Cache {
   }
 }
 class Forecast {
-  constructor (place) {
-    const capitalize = v => v.charAt(0).toUpperCase() + v.slice(1).toLowerCase()
-    this.place = place.split(' ').map(i => capitalize(i)).join(' ')
+  constructor (place, lat, lon) {
+    this.initPlace(place, lat, lon)
+  }
+  async initPlace (place, lat, lon) {
+    if (place) {
+      this.place = place.split(' ').map(i => this.capitalize(i)).join(' ')
+    } else {
+      this.lat = lat
+      this.lon = lon
+      this.getData()
+    }
+  }
+  capitalize (v) {
+    return v.charAt(0).toUpperCase() + v.slice(1).toLowerCase()
   }
   getPlace() {
     return this.place
@@ -59,16 +70,19 @@ class Forecast {
     return asafonov.cache.getItem(this.place)
   }
   async getData() {
-    let data = asafonov.cache.get(this.place)
+    let data = this.place ? asafonov.cache.get(this.place) : null
     if (! data) {
       data = {hourly: [], daily: []}
-      const url = `${asafonov.settings.apiUrl}/?place=${this.place}`
+      const url = `${asafonov.settings.apiUrl}/?` + (this.place ? `place=${this.place}` : `lat=${this.lat}&lon=${this.lon}`)
       try {
         const apiResp = await (await fetch(url)).json()
         const date = apiResp[0].date.substr(0, 10)
         let maxToday = apiResp[0].temp
         let minToday = apiResp[0].temp
         let prevDate = date
+        if (! this.place) {
+          this.place = apiResp[0].place
+        }
         for (let i = 1; i < apiResp.length; ++i) {
           let d = apiResp[i].date.substr(0, 10)
           let h = apiResp[i].date.substr(11, 2)
@@ -110,7 +124,7 @@ class Forecast {
         data.now = {
           ...this.formatData(apiResp[0]), ...{max: maxToday, min: minToday, timezone: apiResp[0].timezone}
         }
-        asafonov.cache.set(this.getPlace(), data)
+        this.place && asafonov.cache.set(this.place, data)
       } catch (e) {
         console.error(e)
         return
@@ -120,6 +134,9 @@ class Forecast {
   }
   destroy() {
     this.place = null
+    this.lat = null
+    this.lon = null
+    this.data = null
   }
 }
 class MessageBus {
@@ -165,17 +182,32 @@ class ControlView {
   constructor() {
     this.addEventListeners()
     this.container = document.querySelector('#forecast')
-    this.navigationView = new NavigationView(this.container)
     this.forecastViews = []
-    const cities = asafonov.cache.getItem('cities')
-    if (cities && cities.length > 0) {
+    const cities = asafonov.cache.getItem('cities') || []
+    if (cities.length > 0) {
       for (let i = 0; i < cities.length; ++i) {
         this.forecastViews.push(new ForecastView(cities[i], this.container))
       }
-      this.displayForecast()
+    }
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        position => {
+          const lat = position.coords.latitude
+          const lon = position.coords.longitude
+          this.forecastViews.push(new ForecastView(null, this.container, lat, lon))
+          this.displayForecast(cities.length)
+          this.navigationView = new NavigationView(this.container, true)
+        },
+        error => {
+          cities.length === 0 && this.forecastViews.push(new ForecastView(asafonov.settings.defaultCity, this.container))
+          this.displayForecast()
+          this.navigationView = new NavigationView(this.container, false)
+        }
+      )
     } else {
-      this.defaultForecastView = new ForecastView(asafonov.settings.defaultCity, this.container)
-      this.defaultForecastView.display()
+      cities.length === 0 && this.forecastViews.push(new ForecastView(asafonov.settings.defaultCity, this.container))
+      this.displayForecast()
+      this.navigationView = new NavigationView(this.container, false)
     }
   }
   getCurrentCityIndex() {
@@ -185,12 +217,10 @@ class ControlView {
   }
   displayForecast (index) {
     if (index === null || index === undefined) {
-      index = this.getCurrentCityIndex()
+      index = this.getCurrentCityIndex() || 0
     }
-    if (index > -1) {
-      asafonov.cache.set('city', index)
-      this.forecastViews[index].display()
-    }
+    asafonov.cache.set('city', index)
+    this.forecastViews[index].display()
   }
   addEventListeners() {
     asafonov.messageBus.subscribe(asafonov.events.CITY_ADDED, this, 'onCityAdded')
@@ -205,14 +235,16 @@ class ControlView {
     asafonov.messageBus.unsubscribe(asafonov.events.USE_SYSTEM_UPDATED, this, 'onUseSystemUpdated')
   }
   onUseSystemUpdated() {
-    const index = this.getCurrentCityIndex()
-    if (index > -1)
-      this.displayForecast(index)
-    else if (this.defaultForecastView)
-      this.defaultForecastView.display()
+    const index = this.getCurrentCityIndex() || 0
+    this.displayForecast(index)
   }
-  onCityAdded ({city}) {
-    this.forecastViews.push(new ForecastView(city, this.container))
+  onCityAdded ({city, cities}) {
+    if (cities.length === 1) {
+      this.forecastViews[0].destroy()
+      this.forecastViews[0] = new  ForecastView(city, this.container)
+    } else {
+      this.forecastViews.push(new ForecastView(city, this.container))
+    }
     this.displayForecast(this.forecastViews.length - 1)
   }
   onCitySelected ({index}) {
@@ -232,14 +264,13 @@ class ControlView {
     this.forecastViews = null
     this.navigationView.destroy()
     this.navigationView = null
-    this.defaultForecastView = null
     this.removeEventListeners()
   }
 }
 class ForecastView {
-  constructor (place, container) {
+  constructor (place, container, lat, lon) {
     this.container = container
-    this.model = new Forecast(place)
+    this.model = new Forecast(place, lat, lon)
   }
   toFahrenheit (v) {
     return Math.round(v * 9 / 5 + 32)
@@ -301,7 +332,12 @@ class ForecastView {
     return ret
   }
   async display() {
-    this.container.querySelector('.city_name').innerHTML = this.model.getPlace()
+    const place = this.model.getPlace()
+    if (! place) {
+      setTimeout(() => this.display(), 200)
+      return
+    }
+    this.container.querySelector('.city_name').innerHTML = place
     this.displayData(this.model.getCachedData())
     const data = await this.model.getData()
     this.displayData(data)
@@ -400,7 +436,8 @@ class ForecastView {
 }
 class NavigationView {
  
-  constructor (container) {
+  constructor (container, geoUsed) {
+    this.geoUsed = geoUsed
     const navigationContainer = container.querySelector('.navigation')
     this.addButton = navigationContainer.querySelector('.icon_add')
     this.listButton = navigationContainer.querySelector('.icon_list')
@@ -431,10 +468,11 @@ class NavigationView {
     const cities = asafonov.cache.getItem('cities')
     const city = selected || asafonov.cache.getItem('city')
     this.setMenuButtonVisibility('deleteCityButton', cities && cities.length > 0)
-    if (cities && cities.length > 1) {
+    const showPagesButtons = cities && (cities.length > 1 || (cities.length > 0 && this.geoUsed))
+    if (showPagesButtons) {
       this.pagesButtons.style.opacity = 1
       this.pagesButtons.innerHTML = ''
-      for (let i = 0; i < cities.length; ++i) {
+      for (let i = 0; i < cities.length + (this.geoUsed ? 1 : 0); ++i) {
         const div = document.createElement('div')
         div.className = 'icon_wrap icon_small icon_pages'
         if (i === city) div.id = 'selected_page'
@@ -467,7 +505,7 @@ class NavigationView {
         const cities = asafonov.cache.getItem('cities') || []
         if (cities.indexOf(city) === -1) {
           cities.push(city)
-          asafonov.messageBus.send(asafonov.events.CITY_ADDED, {city})
+          asafonov.messageBus.send(asafonov.events.CITY_ADDED, {city, cities})
           asafonov.cache.set('cities', cities)
           this.updatePagesButtons()
         }
@@ -530,6 +568,7 @@ class NavigationView {
     this.addButton = null
     this.pagesButtons.innerHTML = ''
     this.pagesButtons = null
+    this.geoUsed = null
   }
 }
 window.asafonov = {}
