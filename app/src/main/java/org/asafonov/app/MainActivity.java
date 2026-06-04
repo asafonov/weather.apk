@@ -1,14 +1,28 @@
 package org.asafonov.weather;
 
+import android.Manifest;
+import android.content.pm.PackageManager;
 import android.annotation.SuppressLint;
-import android.app.Activity;
 import android.os.Bundle;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
+import androidx.annotation.NonNull;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+import android.app.Activity;
 
 public class MainActivity extends Activity {
 
     private WebView mWebView;
+    private static final int REQ_LOCATION = 1001;
+
+    private void requestLocationPermissions() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, new String[] {Manifest.permission.ACCESS_FINE_LOCATION}, REQ_LOCATION);
+        } else {
+            mWebView.loadUrl("file:///android_asset/index.html");
+        }
+    }
 
     @Override
     @SuppressLint("SetJavaScriptEnabled")
@@ -25,7 +39,16 @@ public class MainActivity extends Activity {
         mWebView.setWebChromeClient(new MyWebChromeClient());
         mWebView.clearCache(true);
         mWebView.clearHistory();
+        requestLocationPermissions();
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode,
+                                           @NonNull String[] permissions,
+                                           @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         mWebView.loadUrl("file:///android_asset/index.html");
+        // Optional: handle denied permission here
     }
 
     @Override

@@ -14,7 +14,7 @@ import android.webkit.GeolocationPermissions;
 
 class MyWebChromeClient extends WebChromeClient {
     @Override
-    public void onGeolocationPermissionShowPrompt(String origin, GeolocationPermissions.Callback callback) {
+    public void onGeolocationPermissionsShowPrompt(String origin, GeolocationPermissions.Callback callback) {
         callback.invoke(origin, true, false);
     }
 
