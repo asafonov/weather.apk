@@ -1,0 +1,1 @@
+set minimal android version to android 10 (sdk 29)
