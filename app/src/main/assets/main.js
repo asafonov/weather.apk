@@ -75,7 +75,7 @@ class Forecast {
       data = {hourly: [], daily: []}
       const url = `${asafonov.settings.apiUrl}/?` + (this.place ? `place=${this.place}` : `lat=${this.lat}&lon=${this.lon}`)
       try {
-        const apiResp = await (await fetch(url)).json()
+        const apiResp = await asafonov.request.get(url, true)
         const date = apiResp[0].date.substr(0, 10)
         let maxToday = apiResp[0].temp
         let minToday = apiResp[0].temp
@@ -176,6 +176,38 @@ class MessageBus {
       this.unsubsribeType(type);
     }
     this.subscribers = null;
+  }
+}
+class Request {
+  constructor (clientId) {
+    this.clientId = clientId
+    this.alphabet = 'abcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+    this.keyLength = 32
+  }
+  getKey() {
+    let key = ''
+    for (let i = 0; i < this.keyLength; ++i) {
+      key += this.alphabet[parseInt(Math.random() * this.alphabet.length, 10)]
+    }
+    return key
+  }
+  async getHash (str, alg = 'SHA-256') {
+    const encoder = new TextEncoder()
+    const data = encoder.encode(str)
+    const hashBuffer = await crypto.subtle.digest(alg, data)
+    const hashArray = Array.from(new Uint8Array(hashBuffer))
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
+  }
+  async getSecureUrl (url) {
+    const key = this.getKey()
+    const time = parseInt(new Date().getTime() / 1000, 10)
+    const hash = await this.getHash(this.clientId + time + key)
+    const params = `key=${key}&time=${time}&hash=${hash}`
+    return url + (url.indexOf('?') > -1 ? '&' : '?') + params
+  }
+  async get (url, isSecure = false) {
+    const requestUrl = isSecure ? await this.getSecureUrl(url) : url
+    return await (await fetch(requestUrl)).json()
   }
 }
 class ControlView {
@@ -587,6 +619,9 @@ window.asafonov = {}
 window.asafonov.version = '0.1'
 window.asafonov.messageBus = new MessageBus()
 window.asafonov.cache = new Cache(600000)
+window.asafonov.request = new Request(
+  'kj;gadojknm,nvdw;[kjk;jsnm.gdsiotkkkk;spalksjndpit]]iw'
+)
 window.asafonov.events = {
   CITY_ADDED: 'CITY_ADDED',
   CITY_SELECTED: 'CITY_SELECTED',
